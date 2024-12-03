@@ -1,56 +1,32 @@
 import express from "express";
-import { MongoClient, ObjectId } from "mongodb";
+import { MongoClient } from "mongodb";
+import { RequestHandler } from "./handlers/requestHandler";
+import { DB_NAME, MONGO_URL, PORT } from "./constants";
 
-// Basic app config
 const app = express();
-const port = 3000;
 app.use(express.json());
-
-// Database config
-const mongoUrl = "mongodb://localhost:27017";
-const dbName = "typescript-project-database";
-const collectionName = "typescript-project-collection";
-const client = new MongoClient(mongoUrl);
+const client: MongoClient = new MongoClient(MONGO_URL);
 
 async function main() {
   try {
+    // Connect to DB
     await client.connect();
-    const db = client.db(dbName);
-    const collection = db.collection(collectionName);
     console.log("Connected to MongoDB");
 
-    // POST request to insert an object
-    app.post("/", async (req, res) => {
-      try {
-        const result = await collection.insertOne(req.body);
-        res.status(201).send(result);
-      } catch (error) {
-        res.status(500).send(error);
-      }
-    });
+    // Define request handlers
+    const requestHandler: RequestHandler = new RequestHandler(client, DB_NAME);
+    app.post("/", (req, res) => requestHandler.insertObject(req, res));
+    app.get("/", (req, res) => requestHandler.retrieveAllObjects(req, res));
+    app.get("/:id", (req, res) => requestHandler.retrieveObject(req, res));
+    app.patch("/:id", (req, res) => requestHandler.updateObject(req, res));
+    app.delete("/:id", (req, res) => requestHandler.deleteObject(req, res));
 
-    // GET request to retrieve an object by ID
-    app.get("/:id", async (req, res) => {
-      try {
-        const id = req.params.id;
-        const object = await collection.findOne({
-          _id: new ObjectId(id),
-        });
-        if (object) {
-          res.status(200).send(object);
-        } else {
-          res.status(404).send("Object not found");
-        }
-      } catch (error) {
-        res.status(500).send(error);
-      }
-    });
-
-    app.listen(port, () => {
-      console.log(`Server is running at http://localhost:${port}`);
+    // Start the server
+    app.listen(PORT, () => {
+      console.log(`Server is running at http://localhost:${PORT}`);
     });
   } catch (error) {
-    console.error("Failed to connect to MongoDB", error);
+    console.error("An error occurred while handling request", error);
   }
 }
 
