@@ -1,10 +1,12 @@
 import express from "express";
+import cors from "cors";
 import { MongoClient } from "mongodb";
 import { RequestHandler } from "./handlers/requestHandler";
 import { DB_NAME, MONGO_URL, PORT } from "./constants";
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 const client: MongoClient = new MongoClient(MONGO_URL);
 
 async function main() {
