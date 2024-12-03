@@ -2,7 +2,7 @@
 import { Request, Response } from "express";
 import { MongoClient, Db, ObjectId } from "mongodb";
 import { COLLECTION_NAME } from "../constants";
-import { MasterList } from "../../common/types/listTypes";
+import { MasterList } from "../types/listTypes";
 
 export class RequestHandler {
   private db: Db;
