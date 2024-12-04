@@ -102,7 +102,7 @@ const ListView: React.FC<ListViewProps> = ({ lists, onDelete, onEdit }) => {
           </Grid>
         ))
       ) : (
-        <Typography variant="body1">No lists available</Typography>
+        <Typography variant="body1"></Typography>
       )}
     </Grid>
   );
