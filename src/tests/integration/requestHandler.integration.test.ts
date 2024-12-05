@@ -1,7 +1,7 @@
 import { MongoClient } from "mongodb";
 import { RequestHandler } from "../../handlers/requestHandler";
 import { Request, Response } from "express";
-import { COLLECTION_NAME, MONGO_URL, TEST_DB_NAME } from "../../constants";
+import { TEST_COLLECTION_NAME, MONGO_URL, DB_NAME } from "../../constants";
 import { MasterListCreateRequest } from "../../types/listTypes";
 
 describe("RequestHandler Integration Tests", () => {
@@ -11,12 +11,12 @@ describe("RequestHandler Integration Tests", () => {
   beforeAll(async () => {
     client = new MongoClient(MONGO_URL);
     await client.connect();
-    requestHandler = new RequestHandler(client, TEST_DB_NAME);
-    await client.db(TEST_DB_NAME).collection(COLLECTION_NAME).deleteMany({});
+    requestHandler = new RequestHandler(client, DB_NAME);
+    await client.db(DB_NAME).collection(TEST_COLLECTION_NAME).deleteMany({});
   });
 
   afterAll(async () => {
-    await client.db(TEST_DB_NAME).collection(COLLECTION_NAME).deleteMany({});
+    await client.db(DB_NAME).collection(TEST_COLLECTION_NAME).deleteMany({});
     await client.close();
   });
 
@@ -26,7 +26,10 @@ describe("RequestHandler Integration Tests", () => {
       name: "Test List 1",
       items: ["item1", "item2"],
     };
-    const reqInsertOne = { body: bodyOne } as Request;
+    const reqInsertOne = {
+      body: bodyOne,
+      query: { test: "true" },
+    } as unknown as Request;
     const resInsertOne = {
       status: jest.fn().mockReturnThis(),
       send: jest.fn() as jest.Mock,
@@ -45,6 +48,7 @@ describe("RequestHandler Integration Tests", () => {
     // Read
     const reqRead = {
       params: { id: insertedIdOne.toString() },
+      query: { test: "true" },
     } as unknown as Request;
     const resRead = {
       status: jest.fn().mockReturnThis(),
@@ -66,7 +70,10 @@ describe("RequestHandler Integration Tests", () => {
       name: "Test List 2",
       items: ["item1", "item2"],
     };
-    const reqInsertTwo = { body: bodyTwo } as Request;
+    const reqInsertTwo = {
+      body: bodyTwo,
+      query: { test: "true" },
+    } as unknown as Request;
     const resInsertTwo = {
       status: jest.fn().mockReturnThis(),
       send: jest.fn() as jest.Mock,
@@ -77,6 +84,7 @@ describe("RequestHandler Integration Tests", () => {
     // Read All
     const reqReadAll = {
       params: {},
+      query: { test: "true" },
     } as unknown as Request;
     const resReadAll = {
       status: jest.fn().mockReturnThis(),
@@ -104,6 +112,7 @@ describe("RequestHandler Integration Tests", () => {
     const reqUpdate = {
       params: { id: insertedIdOne.toString() },
       body: { name: "Updated List", items: ["item3", "item4"] },
+      query: { test: "true" },
     } as unknown as Request;
     const resUpdate = {
       status: jest.fn().mockReturnThis(),
@@ -123,6 +132,7 @@ describe("RequestHandler Integration Tests", () => {
     // Verify Update
     const reqVerifyUpdate = {
       params: { id: insertedIdOne.toString() },
+      query: { test: "true" },
     } as unknown as Request;
     const resVerifyUpdate = {
       status: jest.fn().mockReturnThis(),
@@ -142,6 +152,7 @@ describe("RequestHandler Integration Tests", () => {
     // Delete
     const reqDelete = {
       params: { id: insertedIdOne.toString() },
+      query: { test: "true" },
     } as unknown as Request;
     const resDelete = {
       status: jest.fn().mockReturnThis(),

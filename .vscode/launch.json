@@ -1,0 +1,56 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "IsMasterList Unit Test",
+      "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/jest",
+      "args": [
+        "--runInBand",
+        "--config=${workspaceFolder}/jest.config.js",
+        "src/tests/unit/isMasterList.unit.test.ts"
+      ],
+      "cwd": "${workspaceRoot}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "TEST_MATCH": "**/src/tests/unit/**/*.test.ts"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "RequestHandler Integration Test",
+      "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/jest",
+      "args": [
+        "--runInBand",
+        "--config=${workspaceFolder}/jest.config.js",
+        "src/tests/integration/requestHandler.integration.test.ts"
+      ],
+      "cwd": "${workspaceRoot}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "TEST_MATCH": "**/src/tests/integration/**/*.test.ts"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "API End to End Test",
+      "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/jest",
+      "args": [
+        "--runInBand",
+        "--config=${workspaceFolder}/jest.config.js",
+        "src/tests/endtoend/api.endtoend.test.ts"
+      ],
+      "cwd": "${workspaceRoot}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "TEST_MATCH": "**/src/tests/endtoend/**/*.test.ts"
+      }
+    }
+  ]
+}

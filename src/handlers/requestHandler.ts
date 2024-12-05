@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { MongoClient, Db, ObjectId } from "mongodb";
-import { COLLECTION_NAME } from "../constants";
+import { COLLECTION_NAME, TEST_COLLECTION_NAME } from "../constants";
 import { isMasterListCreateRequest, MasterList } from "../types/listTypes";
 
 export class RequestHandler {
@@ -12,7 +12,9 @@ export class RequestHandler {
 
   public async insertObject(req: Request, res: Response): Promise<void> {
     try {
-      const collection = this.db.collection(COLLECTION_NAME);
+      const collection = this.db.collection(
+        req.query.test === "true" ? TEST_COLLECTION_NAME : COLLECTION_NAME,
+      );
       if (!isMasterListCreateRequest(req.body)) {
         res
           .status(400)
@@ -33,7 +35,9 @@ export class RequestHandler {
 
   public async retrieveObject(req: Request, res: Response): Promise<void> {
     try {
-      const collection = this.db.collection(COLLECTION_NAME);
+      const collection = this.db.collection(
+        req.query.test === "true" ? TEST_COLLECTION_NAME : COLLECTION_NAME,
+      );
       if (req.params.id.length !== 24) {
         res
           .status(400)
@@ -55,7 +59,9 @@ export class RequestHandler {
 
   public async retrieveAllObjects(req: Request, res: Response): Promise<void> {
     try {
-      const collection = this.db.collection(COLLECTION_NAME);
+      const collection = this.db.collection(
+        req.query.test === "true" ? TEST_COLLECTION_NAME : COLLECTION_NAME,
+      );
       const objects = await collection.find({}).toArray();
       res.status(200).send(objects);
     } catch (error) {
@@ -65,7 +71,9 @@ export class RequestHandler {
 
   public async updateObject(req: Request, res: Response): Promise<void> {
     try {
-      const collection = this.db.collection(COLLECTION_NAME);
+      const collection = this.db.collection(
+        req.query.test === "true" ? TEST_COLLECTION_NAME : COLLECTION_NAME,
+      );
       if (req.params.id.length !== 24) {
         res
           .status(400)
@@ -93,7 +101,9 @@ export class RequestHandler {
 
   public async deleteObject(req: Request, res: Response): Promise<void> {
     try {
-      const collection = this.db.collection(COLLECTION_NAME);
+      const collection = this.db.collection(
+        req.query.test === "true" ? TEST_COLLECTION_NAME : COLLECTION_NAME,
+      );
       if (req.params.id.length !== 24) {
         res
           .status(400)
