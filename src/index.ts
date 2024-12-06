@@ -1,8 +1,9 @@
 import express from "express";
 import cors from "cors";
 import { MongoClient } from "mongodb";
-import { RequestHandler } from "./handlers/requestHandler";
+import { RequestHandler } from "./requestHandler";
 import { DB_NAME, MONGO_URL, PORT } from "./constants";
+import { authenticateToken } from "./auth";
 
 const app = express();
 app.use(express.json());
@@ -17,6 +18,18 @@ async function main() {
 
     // Define request handlers
     const requestHandler: RequestHandler = new RequestHandler(client, DB_NAME);
+    app.post("/users", (req, res) => requestHandler.createUser(req, res));
+    app.post("/login", (req, res) => requestHandler.loginUser(req, res));
+
+    // Protected routes
+    app.use(authenticateToken);
+    app.get("/users/:username", (req, res) => requestHandler.getUser(req, res));
+    app.patch("/users/:username", (req, res) =>
+      requestHandler.updateUser(req, res),
+    );
+    app.delete("/users/:username", (req, res) =>
+      requestHandler.deleteUser(req, res),
+    );
     app.post("/", (req, res) => requestHandler.insertObject(req, res));
     app.get("/", (req, res) => requestHandler.retrieveAllObjects(req, res));
     app.get("/:id", (req, res) => requestHandler.retrieveObject(req, res));

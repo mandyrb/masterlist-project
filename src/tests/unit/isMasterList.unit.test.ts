@@ -1,4 +1,4 @@
-import { isMasterListCreateRequest } from "../../types/listTypes";
+import { isMasterListCreateRequest } from "../../utils";
 
 describe("isMasterListCreateRequest", () => {
   it("should return true for a valid MasterListCreateRequest object", () => {

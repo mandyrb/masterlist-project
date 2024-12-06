@@ -1,11 +1,83 @@
 import request from "supertest";
 import { API_URL } from "../../constants";
+const testUser = { username: "testuser", password: "testpassword" };
 
-describe("API Endpoints", () => {
+describe("User API Endpoints", () => {
+  beforeAll(async () => {
+    // Ensure the test user exists
+    await request(API_URL)
+      .post("/users")
+      .query({ test: "true" })
+      .send(testUser);
+  });
+
+  it("should not create a user with an existing username", async () => {
+    const response = await request(API_URL)
+      .post("/users")
+      .query({ test: "true" })
+      .send(testUser);
+
+    expect(response.status).toBe(409);
+    expect(response.text).toContain("Username already exists");
+  });
+
+  it("should login a user successfully", async () => {
+    const response = await request(API_URL)
+      .post("/login")
+      .query({ test: "true" })
+      .send(testUser);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(
+      expect.objectContaining({ token: expect.any(String) }),
+    );
+  });
+
+  it("should not login with incorrect password", async () => {
+    const response = await request(API_URL)
+      .post("/login")
+      .query({ test: "true" })
+      .send({ ...testUser, password: "wrongpassword" });
+
+    expect(response.status).toBe(401);
+    expect(response.text).toContain("Invalid username or password");
+  });
+
+  it("should not login with non-existent username", async () => {
+    const response = await request(API_URL)
+      .post("/login")
+      .query({ test: "true" })
+      .send({ username: "nonexistentuser", password: "testpassword" });
+
+    expect(response.status).toBe(401);
+    expect(response.text).toContain("Invalid username or password");
+  });
+});
+
+describe("List API Endpoints", () => {
+  let token: string;
+
+  beforeAll(async () => {
+    // Ensure the test user exists
+    await request(API_URL)
+      .post("/users")
+      .query({ test: "true" })
+      .send(testUser);
+
+    // Login to get the token
+    const loginResponse = await request(API_URL)
+      .post("/login")
+      .query({ test: "true" })
+      .send({ username: "testuser", password: "testpassword" });
+
+    token = loginResponse.body.token;
+  });
+
   it("should handle CRUD operations", async () => {
     // Create a new object
     const postResponse = await request(API_URL)
       .post("/")
+      .set("Authorization", `Bearer ${token}`)
       .query({ test: "true" })
       .send({ name: "Test List", items: ["item1", "item2"] });
     expect(postResponse.status).toBe(201);
@@ -15,6 +87,7 @@ describe("API Endpoints", () => {
     // Bad create request
     const badCreateResponse = await request(API_URL)
       .post("/")
+      .set("Authorization", `Bearer ${token}`)
       .query({ test: "true" })
       .send({ items: ["item1", "item2"] }); // Missing 'name' field
     expect(badCreateResponse.status).toBe(400);
@@ -25,6 +98,7 @@ describe("API Endpoints", () => {
     // Retrieve all objects
     const getAllResponse = await request(API_URL)
       .get("/")
+      .set("Authorization", `Bearer ${token}`)
       .query({ test: "true" });
     expect(getAllResponse.status).toBe(200);
     expect(Array.isArray(getAllResponse.body)).toBe(true);
@@ -32,6 +106,7 @@ describe("API Endpoints", () => {
     // Retrieve the specific object
     const getResponse = await request(API_URL)
       .get(`/${id}`)
+      .set("Authorization", `Bearer ${token}`)
       .query({ test: "true" });
     expect(getResponse.status).toBe(200);
     expect(getResponse.body.name).toBe("Test List");
@@ -40,6 +115,7 @@ describe("API Endpoints", () => {
     const nonExistentId = "000000000000000000000000";
     const badReadResponseOne = await request(API_URL)
       .get(`/${nonExistentId}`)
+      .set("Authorization", `Bearer ${token}`)
       .query({ test: "true" });
     expect(badReadResponseOne.status).toBe(404);
     expect(badReadResponseOne.text).toBe(
@@ -50,6 +126,7 @@ describe("API Endpoints", () => {
     const shortId = "0000000";
     const badReadResponseTwo = await request(API_URL)
       .get(`/${shortId}`)
+      .set("Authorization", `Bearer ${token}`)
       .query({ test: "true" });
     expect(badReadResponseTwo.status).toBe(400);
     expect(badReadResponseTwo.text).toBe(
@@ -59,7 +136,8 @@ describe("API Endpoints", () => {
     // Update the object
     const patchResponse = await request(API_URL)
       .patch(`/${id}`)
-      .send({ name: "Updated List", items: ["item3"] })
+      .set("Authorization", `Bearer ${token}`)
+      .send({ ...getResponse.body, name: "Updated List", items: ["item3"] })
       .query({ test: "true" });
     expect(patchResponse.status).toBe(200);
     expect(patchResponse.body.name).toBe("Updated List");
@@ -67,6 +145,7 @@ describe("API Endpoints", () => {
     // Delete the object
     const deleteResponse = await request(API_URL)
       .delete(`/${id}`)
+      .set("Authorization", `Bearer ${token}`)
       .query({ test: "true" });
     expect(deleteResponse.status).toBe(200);
     expect(deleteResponse.text).toBe(`Deleted object with id: ${id}`);

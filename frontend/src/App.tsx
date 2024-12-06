@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Container, Typography } from "@mui/material";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { Container, Typography, Button, Box } from "@mui/material";
 import CreateListForm from "./components/CreateListForm";
 import ListView from "./components/ListView";
+import Auth from "./components/Auth";
 import { fetchLists, createList, updateList, deleteList } from "./services/api";
 
 interface List {
@@ -14,18 +16,28 @@ interface List {
 
 const App: React.FC = () => {
   const [lists, setLists] = useState<List[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
-    const loadLists = async () => {
-      try {
-        const data = await fetchLists();
-        setLists(data);
-      } catch (error) {
-        console.error("Failed to fetch lists:", error);
-      }
-    };
-    loadLists();
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsAuthenticated(true);
+    }
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const loadLists = async () => {
+        try {
+          const data = await fetchLists();
+          setLists(data);
+        } catch (error) {
+          console.error("Failed to fetch lists:", error);
+        }
+      };
+      loadLists();
+    }
+  }, [isAuthenticated]);
 
   const handleCreateList = async (name: string) => {
     try {
@@ -41,7 +53,7 @@ const App: React.FC = () => {
     try {
       const list = lists.find((l) => l._id === id);
       if (list) {
-        await updateList(id, { name: list.name, items: updatedItems });
+        await updateList(id, { ...list, items: updatedItems });
         const data = await fetchLists();
         setLists(data);
       }
@@ -60,20 +72,77 @@ const App: React.FC = () => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setIsAuthenticated(false);
+    setLists([]);
+  };
+
   return (
-    <Container
-      sx={{ backgroundColor: "lightblue", minHeight: "100vh", padding: 2 }}
-    >
-      <Typography variant="h1" align="center" gutterBottom>
-        List Manager
-      </Typography>
-      <CreateListForm onCreate={handleCreateList} />
-      <ListView
-        lists={lists}
-        onDelete={handleDeleteList}
-        onEdit={handleUpdateList}
-      />
-    </Container>
+    <Router>
+      <Container
+        sx={{
+          backgroundColor: "lightblue",
+          minHeight: "100vh",
+          padding: 2,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            mb: 2,
+            position: "relative",
+          }}
+        >
+          <Typography
+            variant="h1"
+            align="center"
+            gutterBottom
+            sx={{ flexGrow: 1 }}
+          >
+            List Manager
+          </Typography>
+          {isAuthenticated && (
+            <Button
+              onClick={handleLogout}
+              variant="contained"
+              color="primary"
+              sx={{ position: "absolute", right: 0 }}
+            >
+              Logout
+            </Button>
+          )}
+        </Box>
+        <Typography variant="h4" align="center" gutterBottom>
+          Welcome to List Manager where you can create custom lists!
+        </Typography>
+        <Box sx={{ flexGrow: 1 }}>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                isAuthenticated ? (
+                  <>
+                    <CreateListForm onCreate={handleCreateList} />
+                    <ListView
+                      lists={lists}
+                      onDelete={handleDeleteList}
+                      onEdit={handleUpdateList}
+                    />
+                  </>
+                ) : (
+                  <Auth onAuthSuccess={() => setIsAuthenticated(true)} />
+                )
+              }
+            />
+          </Routes>
+        </Box>
+      </Container>
+    </Router>
   );
 };
 

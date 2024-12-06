@@ -91,7 +91,7 @@ const ListView: React.FC<ListViewProps> = ({ lists, onDelete, onEdit }) => {
                 </Box>
                 <Button
                   variant="outlined"
-                  color="secondary"
+                  color="primary"
                   onClick={() => onDelete(list._id)}
                   sx={{ marginTop: 2 }}
                 >
