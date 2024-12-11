@@ -6,16 +6,17 @@ import ListView from "./components/ListView";
 import Auth from "./components/Auth";
 import { fetchLists, createList, updateList, deleteList } from "./services/api";
 
-interface List {
+export interface UserList {
   _id: string;
   name: string;
   createdDate: Date;
   modifiedDate: Date;
   items: string[];
+  suggestions: string;
 }
 
 const App: React.FC = () => {
-  const [lists, setLists] = useState<List[]>([]);
+  const [lists, setLists] = useState<UserList[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {

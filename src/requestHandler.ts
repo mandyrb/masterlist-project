@@ -1,3 +1,5 @@
+import dotenv from "dotenv";
+dotenv.config();
 import { Request, Response } from "express";
 import { MongoClient, Db, ObjectId } from "mongodb";
 import {
@@ -10,12 +12,17 @@ import { MasterList } from "./types";
 import { isMasterListCreateRequest } from "./utils";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { OpenAI } from "openai";
 
 export class RequestHandler {
   private db: Db;
+  private openai: OpenAI;
 
   constructor(client: MongoClient, dbName: string) {
     this.db = client.db(dbName);
+    this.openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
   }
 
   public async createUser(req: Request, res: Response): Promise<void> {
@@ -155,6 +162,7 @@ export class RequestHandler {
           createdDate: new Date(),
           modifiedDate: new Date(),
           username: req.user.username,
+          suggestions: await this.generateSuggestions(req.body),
         };
         const result = await collection.insertOne(list);
         res.status(201).send({ ...list, _id: result.insertedId });
@@ -241,6 +249,9 @@ export class RequestHandler {
           if (object.username === req.user.username) {
             const { _id, ...updateData } = req.body;
             updateData.modifiedDate = new Date();
+            updateData.suggestions = await this.generateSuggestions(
+              object as MasterList,
+            );
             const updatedObject = await collection.findOneAndReplace(
               {
                 _id: new ObjectId(req.params.id),
@@ -283,8 +294,6 @@ export class RequestHandler {
           _id: new ObjectId(req.params.id),
         });
         if (object) {
-          console.log(`user: ${JSON.stringify(req.user, null, 2)}`);
-          console.log(`object: ${JSON.stringify(object, null, 2)}`);
           if (object.username === req.user.username) {
             await collection.deleteOne({
               _id: new ObjectId(req.params.id),
@@ -303,6 +312,25 @@ export class RequestHandler {
       }
     } catch (error) {
       res.status(500).send(error);
+    }
+  }
+
+  private async generateSuggestions(object: MasterList): Promise<string> {
+    try {
+      const prompt = `Your task is to generate three suggestions of NEW items that could be added to a list called ${
+        object.name
+      } that already contains the following items: ${JSON.stringify(
+        object.items,
+      )}. If the list does not already contain any items, you will need to base your suggestions off the name of the list. Your response should ALWAYS be in this format: Here are some suggested items for your list: {item1}, {item2}, {item3}`;
+      const response = await this.openai.completions.create({
+        model: "gpt-3.5-turbo-instruct",
+        prompt,
+        max_tokens: 50,
+      });
+      return response.choices[0].text.trim();
+    } catch (error) {
+      console.error("Error generating suggestions:", error);
+      return "Error generating suggestions";
     }
   }
 }

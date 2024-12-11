@@ -203,6 +203,8 @@ components:
       properties:
         name:
           type: string
+        suggestions:
+          type: string
         items:
           type: array
           items:

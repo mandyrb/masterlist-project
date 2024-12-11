@@ -1,6 +1,6 @@
 # Master List Project with Express and MongoDB
 
-This project is a simple API built with TypeScript, Express, and MongoDB. It allows users to create, read, update, and delete lists in a MongoDB database.
+This project is a simple API built with TypeScript, Express, and MongoDB. It allows users to create, read, update, and delete lists in a MongoDB database. It also provides AI-generated suggestions for new list items.
 
 ## Getting Started
 
@@ -10,6 +10,7 @@ Follow these steps to set up and run the project locally:
 - Install Docker from [docker.com](https://www.docker.com/)
 - Install dependencies: `npm install`
 - Pull the MongoDB Docker image: `docker pull mongo`
+- Create an `.env` file at the project root with values for `AUTH_KEY` and `OPENAI_API_KEY`
 - Start the MongoDB container: `docker run --name mongodb -d -p 27017:27017 -v mongo-data:/data/db mongo`
 - Start the application: `npm run dev:all`
 

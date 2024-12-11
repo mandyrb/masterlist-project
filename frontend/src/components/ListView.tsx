@@ -13,9 +13,10 @@ import {
   Grid,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { UserList } from "../App";
 
 interface ListViewProps {
-  lists: { _id: string; name: string; items: string[] }[];
+  lists: UserList[];
   onDelete: (id: string) => void;
   onEdit: (id: string, updatedItems: string[]) => void;
 }
@@ -89,6 +90,17 @@ const ListView: React.FC<ListViewProps> = ({ lists, onDelete, onEdit }) => {
                     Add Item
                   </Button>
                 </Box>
+                <Typography
+                  variant="body2"
+                  component="div"
+                  sx={{
+                    color: "rgba(0, 0, 0, 0.6)",
+                    marginTop: 1,
+                    marginBottom: 3,
+                  }}
+                >
+                  {list.suggestions}
+                </Typography>
                 <Button
                   variant="outlined"
                   color="primary"

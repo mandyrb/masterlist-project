@@ -7,6 +7,7 @@ export interface MasterList {
   modifiedDate: Date;
   items: string[];
   username: string;
+  suggestions?: string;
 }
 
 export interface MasterListCreateRequest {
