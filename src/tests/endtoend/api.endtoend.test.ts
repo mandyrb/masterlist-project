@@ -79,7 +79,13 @@ describe("List API Endpoints", () => {
       .post("/")
       .set("Authorization", `Bearer ${token}`)
       .query({ test: "true" })
-      .send({ name: "Test List", items: ["item1", "item2"] });
+      .send({
+        name: "Test List",
+        items: [
+          { name: "item1", favorite: false },
+          { name: "item2", favorite: true },
+        ],
+      });
     expect(postResponse.status).toBe(201);
     const id = postResponse.body._id;
     expect(id).toBeDefined();
@@ -89,7 +95,12 @@ describe("List API Endpoints", () => {
       .post("/")
       .set("Authorization", `Bearer ${token}`)
       .query({ test: "true" })
-      .send({ items: ["item1", "item2"] }); // Missing 'name' field
+      .send({
+        items: [
+          { name: "item1", favorite: false },
+          { name: "item2", favorite: true },
+        ],
+      }); // Missing 'name' field
     expect(badCreateResponse.status).toBe(400);
     expect(badCreateResponse.text).toContain(
       "Bad request: body must contain fields 'name' and 'items'",
@@ -137,7 +148,11 @@ describe("List API Endpoints", () => {
     const patchResponse = await request(API_URL)
       .patch(`/${id}`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ ...getResponse.body, name: "Updated List", items: ["item3"] })
+      .send({
+        ...getResponse.body,
+        name: "Updated List",
+        items: [{ name: "item3", favorite: false }],
+      })
       .query({ test: "true" });
     expect(patchResponse.status).toBe(200);
     expect(patchResponse.body.name).toBe("Updated List");

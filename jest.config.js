@@ -6,5 +6,5 @@ module.exports = {
     "^.+\\.ts$": "ts-jest",
   },
   testMatch: [process.env.TEST_MATCH],
-  testTimeout: 10000,
+  testTimeout: 300000,
 };

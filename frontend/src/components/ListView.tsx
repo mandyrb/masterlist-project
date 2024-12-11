@@ -13,22 +13,30 @@ import {
   Grid,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { UserList } from "../App";
+import { MasterListItem, UserList } from "../App";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 
 interface ListViewProps {
   lists: UserList[];
   onDelete: (id: string) => void;
-  onEdit: (id: string, updatedItems: string[]) => void;
+  onEdit: (id: string, updatedItems: MasterListItem[]) => void;
 }
 
 const ListView: React.FC<ListViewProps> = ({ lists, onDelete, onEdit }) => {
-  const [newItem, setNewItem] = useState<{ [key: string]: string }>({});
+  const [newItem, setNewItem] = useState<{ [key: string]: string }>({
+    name: "",
+  });
 
   const handleAddItem = (listId: string) => {
-    if (newItem[listId]?.trim()) {
+    if (newItem[listId]) {
       const list = lists.find((l) => l._id === listId);
       if (list) {
-        onEdit(listId, [...list.items, newItem[listId].trim()]);
+        const newMasterListItem: MasterListItem = {
+          name: newItem[listId],
+          favorite: false,
+        };
+        onEdit(listId, [...list.items, newMasterListItem]);
         setNewItem({ ...newItem, [listId]: "" });
       }
     }
@@ -38,6 +46,16 @@ const ListView: React.FC<ListViewProps> = ({ lists, onDelete, onEdit }) => {
     const list = lists.find((l) => l._id === listId);
     if (list) {
       const updatedItems = list.items.filter((_, index) => index !== itemIndex);
+      onEdit(listId, updatedItems);
+    }
+  };
+
+  const toggleFavorite = (listId: string, itemIndex: number) => {
+    const list = lists.find((l) => l._id === listId);
+    if (list) {
+      const updatedItems = list.items.map((item, index) =>
+        index === itemIndex ? { ...item, favorite: !item.favorite } : item,
+      );
       onEdit(listId, updatedItems);
     }
   };
@@ -57,15 +75,27 @@ const ListView: React.FC<ListViewProps> = ({ lists, onDelete, onEdit }) => {
                     <ListItem
                       key={index}
                       secondaryAction={
-                        <IconButton
-                          edge="end"
-                          onClick={() => handleDeleteItem(list._id, index)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
+                        <>
+                          <IconButton
+                            edge="end"
+                            onClick={() => toggleFavorite(list._id, index)}
+                          >
+                            {item.favorite ? (
+                              <FavoriteIcon />
+                            ) : (
+                              <FavoriteBorderIcon />
+                            )}
+                          </IconButton>
+                          <IconButton
+                            edge="end"
+                            onClick={() => handleDeleteItem(list._id, index)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </>
                       }
                     >
-                      <ListItemText primary={item} />
+                      <ListItemText primary={item.name} />
                     </ListItem>
                   ))}
                 </List>

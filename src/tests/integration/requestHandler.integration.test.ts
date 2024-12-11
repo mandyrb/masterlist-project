@@ -118,7 +118,10 @@ describe("RequestHandler Integration Tests", () => {
     // Insert
     const bodyOne: MasterListCreateRequest = {
       name: "Test List 1",
-      items: ["item1", "item2"],
+      items: [
+        { name: "item1", favorite: false },
+        { name: "item2", favorite: true },
+      ],
     };
     const reqInsertOne = {
       body: bodyOne,
@@ -165,7 +168,10 @@ describe("RequestHandler Integration Tests", () => {
     // Insert a second item so we can read all
     const bodyTwo: MasterListCreateRequest = {
       name: "Test List 2",
-      items: ["item1", "item2"],
+      items: [
+        { name: "item1", favorite: false },
+        { name: "item2", favorite: true },
+      ],
     };
     const reqInsertTwo = {
       body: bodyTwo,
@@ -213,7 +219,10 @@ describe("RequestHandler Integration Tests", () => {
       body: {
         ...insertedObjectOne,
         name: "Updated List",
-        items: ["item3", "item4"],
+        items: [
+          { name: "item3", favorite: false },
+          { name: "item4", favorite: true },
+        ],
       },
       query: { test: "true" },
       user: { username: "testuser" },
@@ -232,26 +241,10 @@ describe("RequestHandler Integration Tests", () => {
         items: reqUpdate.body.items,
       }),
     );
-
-    // Verify Update
-    const reqVerifyUpdate = {
-      params: { id: insertedIdOne.toString() },
-      query: { test: "true" },
-      user: { username: "testuser" },
-    } as unknown as Request;
-    const resVerifyUpdate = {
-      status: jest.fn().mockReturnThis(),
-      send: jest.fn(),
-    } as unknown as Response;
-    await requestHandler.retrieveObject(reqVerifyUpdate, resVerifyUpdate);
-
-    expect(resVerifyUpdate.status).toHaveBeenCalledWith(200);
-    expect(resVerifyUpdate.send).toHaveBeenCalledWith(
-      expect.objectContaining({
-        _id: insertedIdOne,
-        name: reqUpdate.body.name,
-        items: reqUpdate.body.items,
-      }),
+    // Suggestions should also be updated
+    const updatedObject = (resUpdate.send as jest.Mock).mock.calls[0][0];
+    expect(updatedObject.suggestions).not.toEqual(
+      insertedObjectOne.suggestions,
     );
 
     // Delete

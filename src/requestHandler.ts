@@ -13,6 +13,7 @@ import { isMasterListCreateRequest } from "./utils";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { OpenAI } from "openai";
+import { ChatCompletionMessageParam } from "openai/resources";
 
 export class RequestHandler {
   private db: Db;
@@ -249,9 +250,19 @@ export class RequestHandler {
           if (object.username === req.user.username) {
             const { _id, ...updateData } = req.body;
             updateData.modifiedDate = new Date();
-            updateData.suggestions = await this.generateSuggestions(
-              object as MasterList,
-            );
+
+            const itemsAreSame =
+              object.items.length === updateData.items.length &&
+              object.items.every(
+                (item: { name: string }, index: number) =>
+                  item.name === updateData.items[index].name,
+              );
+
+            if (!itemsAreSame) {
+              updateData.suggestions = await this.generateSuggestions(
+                updateData as MasterList,
+              );
+            }
             const updatedObject = await collection.findOneAndReplace(
               {
                 _id: new ObjectId(req.params.id),
@@ -317,17 +328,38 @@ export class RequestHandler {
 
   private async generateSuggestions(object: MasterList): Promise<string> {
     try {
-      const prompt = `Your task is to generate three suggestions of NEW items that could be added to a list called ${
-        object.name
-      } that already contains the following items: ${JSON.stringify(
-        object.items,
-      )}. If the list does not already contain any items, you will need to base your suggestions off the name of the list. Your response should ALWAYS be in this format: Here are some suggested items for your list: {item1}, {item2}, {item3}`;
-      const response = await this.openai.completions.create({
-        model: "gpt-3.5-turbo-instruct",
-        prompt,
+      const messages: ChatCompletionMessageParam[] = [
+        {
+          role: "system",
+          content:
+            "You are a helpful assistant that provides suggestions for list items.",
+        },
+        {
+          role: "user",
+          content: `Your task is to generate three suggestions of NEW items that could be added to a list called ${
+            object.name
+          } that already contains the following items: ${JSON.stringify(
+            object.items.map((item) => item.name),
+          )}. If the list does not already contain any items, you will need to base your suggestions off the name of the list. The response should ALWAYS be in this format: Here are some suggested items for your list: {item1}, {item2}, {item3}. Example response for a list with name "food" that already contains "cheese" and "carrots": Here are some suggested items for your list: bread, cereal, and milk`,
+        },
+      ];
+
+      const response = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages,
         max_tokens: 50,
       });
-      return response.choices[0].text.trim();
+
+      if (
+        response.choices &&
+        response.choices[0] &&
+        response.choices[0].message &&
+        response.choices[0].message.content
+      ) {
+        return response.choices[0].message.content.trim();
+      } else {
+        return "No suggestions could be generated.";
+      }
     } catch (error) {
       console.error("Error generating suggestions:", error);
       return "Error generating suggestions";

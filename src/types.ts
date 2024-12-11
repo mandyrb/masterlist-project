@@ -5,14 +5,19 @@ export interface MasterList {
   name: string;
   createdDate: Date;
   modifiedDate: Date;
-  items: string[];
+  items: MasterListItem[];
   username: string;
   suggestions?: string;
 }
 
+export interface MasterListItem {
+  name: string;
+  favorite: boolean;
+}
+
 export interface MasterListCreateRequest {
   name: string;
-  items: string[];
+  items: MasterListItem[];
 }
 
 export interface User {

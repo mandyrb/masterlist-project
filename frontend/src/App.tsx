@@ -11,8 +11,13 @@ export interface UserList {
   name: string;
   createdDate: Date;
   modifiedDate: Date;
-  items: string[];
+  items: MasterListItem[];
   suggestions: string;
+}
+
+export interface MasterListItem {
+  name: string;
+  favorite: boolean;
 }
 
 const App: React.FC = () => {
@@ -50,7 +55,10 @@ const App: React.FC = () => {
     }
   };
 
-  const handleUpdateList = async (id: string, updatedItems: string[]) => {
+  const handleUpdateList = async (
+    id: string,
+    updatedItems: MasterListItem[],
+  ) => {
     try {
       const list = lists.find((l) => l._id === id);
       if (list) {

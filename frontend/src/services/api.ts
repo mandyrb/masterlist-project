@@ -1,3 +1,5 @@
+import { MasterListItem } from "../App";
+
 const API_URL = "http://localhost:3000";
 
 const getAuthHeaders = () => {
@@ -26,7 +28,7 @@ export const createList = async (list: { name: string; items: string[] }) => {
 
 export const updateList = async (
   id: string,
-  list: { name: string; items: string[] },
+  list: { name: string; items: MasterListItem[] },
 ) => {
   const response = await fetch(`${API_URL}/${id}`, {
     method: "PATCH",
