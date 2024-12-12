@@ -23,19 +23,26 @@ async function main() {
 
     // Protected routes
     app.use(authenticateToken);
-    app.get("/users/:username", (req, res) => requestHandler.getUser(req, res));
-    app.patch("/users/:username", (req, res) =>
-      requestHandler.updateUser(req, res),
+    app.post("/list", (req, res) => requestHandler.insertObject(req, res));
+    app.get("/list", (req, res) => requestHandler.retrieveAllObjects(req, res));
+    app.get("/list/:id", (req, res) => requestHandler.retrieveObject(req, res));
+    app.patch("/list/:id", (req, res) => requestHandler.updateObject(req, res));
+    app.delete("/list/:id", (req, res) =>
+      requestHandler.deleteObject(req, res),
     );
-    app.delete("/users/:username", (req, res) =>
-      requestHandler.deleteUser(req, res),
-    );
-    app.post("/", (req, res) => requestHandler.insertObject(req, res));
-    app.get("/", (req, res) => requestHandler.retrieveAllObjects(req, res));
-    app.get("/:id", (req, res) => requestHandler.retrieveObject(req, res));
-    app.patch("/:id", (req, res) => requestHandler.updateObject(req, res));
-    app.delete("/:id", (req, res) => requestHandler.deleteObject(req, res));
     app.get("/story/:id", (req, res) => requestHandler.retrieveStory(req, res));
+
+    // The following routes are not currently in use; if the app is modified to put them
+    // to use, full error handling should be implemented, only allowing authorized
+    // users to get, update, or delete a user.
+
+    // app.get("/users/:username", (req, res) => requestHandler.getUser(req, res));
+    // app.patch("/users/:username", (req, res) =>
+    //   requestHandler.updateUser(req, res),
+    // );
+    // app.delete("/users/:username", (req, res) =>
+    //   requestHandler.deleteUser(req, res),
+    // );
 
     // Start the server
     app.listen(PORT, () => {

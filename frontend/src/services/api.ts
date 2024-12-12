@@ -12,14 +12,14 @@ const getAuthHeaders = () => {
 };
 
 export const fetchLists = async () => {
-  const response = await fetch(`${API_URL}/`, {
+  const response = await fetch(`${API_URL}/list/`, {
     headers: getAuthHeaders(),
   });
   return response.json();
 };
 
 export const createList = async (list: { name: string; items: string[] }) => {
-  const response = await fetch(`${API_URL}/`, {
+  const response = await fetch(`${API_URL}/list/`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(list),
@@ -31,7 +31,7 @@ export const updateList = async (
   id: string,
   list: { name: string; items: MasterListItem[] },
 ) => {
-  const response = await fetch(`${API_URL}/${id}`, {
+  const response = await fetch(`${API_URL}/list/${id}`, {
     method: "PATCH",
     headers: getAuthHeaders(),
     body: JSON.stringify(list),
@@ -48,7 +48,7 @@ export const getStoryForList = async (id: string, mood: StoryMood) => {
 };
 
 export const deleteList = async (id: string) => {
-  await fetch(`${API_URL}/${id}`, {
+  await fetch(`${API_URL}/list/${id}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
   });

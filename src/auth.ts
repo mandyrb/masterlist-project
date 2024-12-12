@@ -13,7 +13,7 @@ export const authenticateToken = (
   const token = authHeader && authHeader.split(" ")[1];
 
   if (!token) {
-    res.status(401).send("Access token is missing or invalid");
+    res.status(401).send("Access token is missing");
     return;
   }
 

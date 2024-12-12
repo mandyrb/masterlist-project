@@ -56,62 +56,6 @@ export class RequestHandler {
     }
   }
 
-  public async getUser(req: Request, res: Response): Promise<void> {
-    try {
-      const { username } = req.params;
-      const collection = this.db.collection(
-        req.query.test === "true" ? USER_TEST_COLLECTION : USER_COLLECTION,
-      );
-      const user = await collection.findOne({ username });
-      if (!user) {
-        res.status(404).send(`User with username ${username} not found`);
-        return;
-      }
-      res.status(200).send(user);
-    } catch (error) {
-      res.status(500).send(error);
-    }
-  }
-
-  public async updateUser(req: Request, res: Response): Promise<void> {
-    try {
-      const { username } = req.params;
-      const { password } = req.body;
-      const collection = this.db.collection(
-        req.query.test === "true" ? USER_TEST_COLLECTION : USER_COLLECTION,
-      );
-      const passwordHash = await bcrypt.hash(password, 10);
-      const result = await collection.updateOne(
-        { username },
-        { $set: { passwordHash } },
-      );
-      if (result.matchedCount === 0) {
-        res.status(404).send(`User with username ${username} not found`);
-        return;
-      }
-      res.status(200).send(`User with username ${username} updated`);
-    } catch (error) {
-      res.status(500).send(error);
-    }
-  }
-
-  public async deleteUser(req: Request, res: Response): Promise<void> {
-    try {
-      const { username } = req.params;
-      const collection = this.db.collection(
-        req.query.test === "true" ? USER_TEST_COLLECTION : USER_COLLECTION,
-      );
-      const result = await collection.deleteOne({ username });
-      if (result.deletedCount === 0) {
-        res.status(404).send(`User with username ${username} not found`);
-        return;
-      }
-      res.status(200).send(`User with username ${username} deleted`);
-    } catch (error) {
-      res.status(500).send(error);
-    }
-  }
-
   public async loginUser(req: Request, res: Response): Promise<void> {
     try {
       const { username, password } = req.body;
@@ -210,68 +154,6 @@ export class RequestHandler {
     }
   }
 
-  public async retrieveStory(req: Request, res: Response): Promise<void> {
-    try {
-      const collection = this.db.collection(
-        req.query.test === "true" ? LIST_TEST_COLLECTION : LIST_COLLECTION,
-      );
-      if (req.params.id.length !== 24) {
-        res
-          .status(400)
-          .send("The id provided must be a string with 24 characters");
-      } else if (!req.user) {
-        res
-          .status(403)
-          .send("Forbidden: request must come from an authenticated user");
-      } else {
-        const object = await collection.findOne({
-          _id: new ObjectId(req.params.id),
-        });
-        if (object) {
-          if (object.username === req.user.username) {
-            let mood: StoryMood;
-            if (req.query.mood) {
-              if (
-                Object.values(StoryMood).includes(req.query.mood as StoryMood)
-              ) {
-                const story: string = await this.generateStoryFromList(
-                  object as MasterList,
-                  req.query.mood as StoryMood,
-                );
-                res.status(200).send(story);
-              } else {
-                res
-                  .status(400)
-                  .send(
-                    `Invalid mood value provided. Valid options include: ${Object.values(
-                      StoryMood,
-                    ).join(", ")}`,
-                  );
-                return;
-              }
-            } else {
-              res
-                .status(400)
-                .send(
-                  `You must provide a mood value to get a story from a list`,
-                );
-            }
-          } else {
-            res
-              .status(401)
-              .send(
-                `User ${req.user.username} is not authorized to retrieve object with id ${req.params.id}`,
-              );
-          }
-        } else {
-          res.status(404).send(`Object with id ${req.params.id} not found`);
-        }
-      }
-    } catch (error) {
-      res.status(500).send(error);
-    }
-  }
-
   public async retrieveAllObjects(req: Request, res: Response): Promise<void> {
     try {
       if (!req.user) {
@@ -337,7 +219,7 @@ export class RequestHandler {
             res
               .status(401)
               .send(
-                `User ${req.user.username} is not authorized to retrieve object with id ${req.params.id}`,
+                `User ${req.user.username} is not authorized to update object with id ${req.params.id}`,
               );
           }
         } else {
@@ -377,6 +259,67 @@ export class RequestHandler {
               .status(401)
               .send(
                 `User ${req.user.username} is not authorized to delete object with id ${req.params.id}`,
+              );
+          }
+        } else {
+          res.status(404).send(`Object with id ${req.params.id} not found`);
+        }
+      }
+    } catch (error) {
+      res.status(500).send(error);
+    }
+  }
+
+  public async retrieveStory(req: Request, res: Response): Promise<void> {
+    try {
+      const collection = this.db.collection(
+        req.query.test === "true" ? LIST_TEST_COLLECTION : LIST_COLLECTION,
+      );
+      if (req.params.id.length !== 24) {
+        res
+          .status(400)
+          .send("The id provided must be a string with 24 characters");
+      } else if (!req.user) {
+        res
+          .status(403)
+          .send("Forbidden: request must come from an authenticated user");
+      } else {
+        const object = await collection.findOne({
+          _id: new ObjectId(req.params.id),
+        });
+        if (object) {
+          if (object.username === req.user.username) {
+            if (req.query.mood) {
+              if (
+                Object.values(StoryMood).includes(req.query.mood as StoryMood)
+              ) {
+                const story: string = await this.generateStoryFromList(
+                  object as MasterList,
+                  req.query.mood as StoryMood,
+                );
+                res.status(200).send(story);
+              } else {
+                res
+                  .status(400)
+                  .send(
+                    `Invalid mood value provided. Valid options include: ${Object.values(
+                      StoryMood,
+                    ).join(", ")}`,
+                  );
+                return;
+              }
+            } else {
+              res
+                .status(400)
+                .send(
+                  `You must provide a mood value to get a story from a list`,
+                );
+            }
+          } else {
+            res
+              .status(401)
+              .send(
+                `User ${req.user.username} is not authorized to generate stories for list with id ${req.params.id}`,
               );
           }
         } else {
@@ -468,6 +411,66 @@ export class RequestHandler {
     } catch (error) {
       console.error("Error generating suggestions:", error);
       return "Error generating suggestions";
+    }
+  }
+
+  // The following methods are not currently in use; if the app is modified to put them
+  // to use, full error handling should be implemented, only allowing authorized
+  // users to get, update, or delete a user.
+
+  public async getUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { username } = req.params;
+      const collection = this.db.collection(
+        req.query.test === "true" ? USER_TEST_COLLECTION : USER_COLLECTION,
+      );
+      const user = await collection.findOne({ username });
+      if (!user) {
+        res.status(404).send(`User with username ${username} not found`);
+        return;
+      }
+      res.status(200).send(user);
+    } catch (error) {
+      res.status(500).send(error);
+    }
+  }
+
+  public async updateUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { username } = req.params;
+      const { password } = req.body;
+      const collection = this.db.collection(
+        req.query.test === "true" ? USER_TEST_COLLECTION : USER_COLLECTION,
+      );
+      const passwordHash = await bcrypt.hash(password, 10);
+      const result = await collection.updateOne(
+        { username },
+        { $set: { passwordHash } },
+      );
+      if (result.matchedCount === 0) {
+        res.status(404).send(`User with username ${username} not found`);
+        return;
+      }
+      res.status(200).send(`User with username ${username} updated`);
+    } catch (error) {
+      res.status(500).send(error);
+    }
+  }
+
+  public async deleteUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { username } = req.params;
+      const collection = this.db.collection(
+        req.query.test === "true" ? USER_TEST_COLLECTION : USER_COLLECTION,
+      );
+      const result = await collection.deleteOne({ username });
+      if (result.deletedCount === 0) {
+        res.status(404).send(`User with username ${username} not found`);
+        return;
+      }
+      res.status(200).send(`User with username ${username} deleted`);
+    } catch (error) {
+      res.status(500).send(error);
     }
   }
 }
