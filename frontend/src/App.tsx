@@ -13,6 +13,7 @@ export interface UserList {
   modifiedDate: Date;
   items: MasterListItem[];
   suggestions: string;
+  pinned: boolean;
 }
 
 export interface MasterListItem {
@@ -55,17 +56,11 @@ const App: React.FC = () => {
     }
   };
 
-  const handleUpdateList = async (
-    id: string,
-    updatedItems: MasterListItem[],
-  ) => {
+  const handleUpdateList = async (updatedList: UserList) => {
     try {
-      const list = lists.find((l) => l._id === id);
-      if (list) {
-        await updateList(id, { ...list, items: updatedItems });
-        const data = await fetchLists();
-        setLists(data);
-      }
+      await updateList(updatedList._id, updatedList);
+      const data = await fetchLists();
+      setLists(data);
     } catch (error) {
       console.error("Failed to update list:", error);
     }
@@ -127,7 +122,8 @@ const App: React.FC = () => {
           )}
         </Box>
         <Typography variant="h4" align="center" gutterBottom>
-          Welcome to List Manager where you can create custom lists!
+          Welcome to List Manager where you can create custom lists, and
+          generate fun stories about those lists!
         </Typography>
         <Box sx={{ flexGrow: 1 }}>
           <Routes>

@@ -8,7 +8,7 @@ import {
   USER_COLLECTION,
   USER_TEST_COLLECTION,
 } from "./constants";
-import { MasterList } from "./types";
+import { MasterList, StoryMood } from "./types";
 import { isMasterListCreateRequest } from "./utils";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -163,7 +163,8 @@ export class RequestHandler {
           createdDate: new Date(),
           modifiedDate: new Date(),
           username: req.user.username,
-          suggestions: await this.generateSuggestions(req.body),
+          suggestions: await this.generateItemSuggestions(req.body),
+          pinned: false,
         };
         const result = await collection.insertOne(list);
         res.status(201).send({ ...list, _id: result.insertedId });
@@ -193,6 +194,68 @@ export class RequestHandler {
         if (object) {
           if (object.username === req.user.username) {
             res.status(200).send(object);
+          } else {
+            res
+              .status(401)
+              .send(
+                `User ${req.user.username} is not authorized to retrieve object with id ${req.params.id}`,
+              );
+          }
+        } else {
+          res.status(404).send(`Object with id ${req.params.id} not found`);
+        }
+      }
+    } catch (error) {
+      res.status(500).send(error);
+    }
+  }
+
+  public async retrieveStory(req: Request, res: Response): Promise<void> {
+    try {
+      const collection = this.db.collection(
+        req.query.test === "true" ? LIST_TEST_COLLECTION : LIST_COLLECTION,
+      );
+      if (req.params.id.length !== 24) {
+        res
+          .status(400)
+          .send("The id provided must be a string with 24 characters");
+      } else if (!req.user) {
+        res
+          .status(403)
+          .send("Forbidden: request must come from an authenticated user");
+      } else {
+        const object = await collection.findOne({
+          _id: new ObjectId(req.params.id),
+        });
+        if (object) {
+          if (object.username === req.user.username) {
+            let mood: StoryMood;
+            if (req.query.mood) {
+              if (
+                Object.values(StoryMood).includes(req.query.mood as StoryMood)
+              ) {
+                const story: string = await this.generateStoryFromList(
+                  object as MasterList,
+                  req.query.mood as StoryMood,
+                );
+                res.status(200).send(story);
+              } else {
+                res
+                  .status(400)
+                  .send(
+                    `Invalid mood value provided. Valid options include: ${Object.values(
+                      StoryMood,
+                    ).join(", ")}`,
+                  );
+                return;
+              }
+            } else {
+              res
+                .status(400)
+                .send(
+                  `You must provide a mood value to get a story from a list`,
+                );
+            }
           } else {
             res
               .status(401)
@@ -250,7 +313,6 @@ export class RequestHandler {
           if (object.username === req.user.username) {
             const { _id, ...updateData } = req.body;
             updateData.modifiedDate = new Date();
-
             const itemsAreSame =
               object.items.length === updateData.items.length &&
               object.items.every(
@@ -259,7 +321,7 @@ export class RequestHandler {
               );
 
             if (!itemsAreSame) {
-              updateData.suggestions = await this.generateSuggestions(
+              updateData.suggestions = await this.generateItemSuggestions(
                 updateData as MasterList,
               );
             }
@@ -326,7 +388,50 @@ export class RequestHandler {
     }
   }
 
-  private async generateSuggestions(object: MasterList): Promise<string> {
+  private async generateStoryFromList(
+    object: MasterList,
+    mood: StoryMood,
+  ): Promise<string> {
+    console.log(`Your task is to generate a ${mood} story`);
+    try {
+      const messages: ChatCompletionMessageParam[] = [
+        {
+          role: "system",
+          content:
+            "You are a helpful assistant that creates stories from a list of words.",
+        },
+        {
+          role: "user",
+          content: `Your task is to generate a ${mood} story that is at most ${
+            object.items.length
+          } sentences long and incorporates the following words: ${JSON.stringify(
+            object.items.map((item) => item.name),
+          )}.`,
+        },
+      ];
+
+      const response = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages,
+      });
+
+      if (
+        response.choices &&
+        response.choices[0] &&
+        response.choices[0].message &&
+        response.choices[0].message.content
+      ) {
+        return response.choices[0].message.content.trim();
+      } else {
+        return "No story could be generated.";
+      }
+    } catch (error) {
+      console.error("Error generating story:", error);
+      return "Error generating story";
+    }
+  }
+
+  private async generateItemSuggestions(object: MasterList): Promise<string> {
     try {
       const messages: ChatCompletionMessageParam[] = [
         {

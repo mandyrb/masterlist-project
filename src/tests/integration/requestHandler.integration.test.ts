@@ -7,7 +7,7 @@ import {
   DB_NAME,
   USER_TEST_COLLECTION,
 } from "../../constants";
-import { MasterListCreateRequest } from "../../types";
+import { MasterListCreateRequest, StoryMood } from "../../types";
 
 describe("RequestHandler Integration Tests", () => {
   let client: MongoClient;
@@ -164,6 +164,56 @@ describe("RequestHandler Integration Tests", () => {
         items: bodyOne.items,
       }),
     );
+
+    // Try to get a story without providing a mood
+    const reqStoryNoMood = {
+      params: { id: insertedIdOne.toString() },
+      query: { test: "true" },
+      user: { username: "testuser" },
+    } as unknown as Request;
+    const resStoryNoMood = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    } as unknown as Response;
+    await requestHandler.retrieveStory(reqStoryNoMood, resStoryNoMood);
+    const responseNoMood = (resStoryNoMood.send as jest.Mock).mock.calls[0][0];
+    expect(resStoryNoMood.status).toHaveBeenCalledWith(400);
+    expect(responseNoMood).toEqual(
+      "You must provide a mood value to get a story from a list",
+    );
+
+    // Try to get a story with an invalid mood
+    const reqStoryInvalid = {
+      params: { id: insertedIdOne.toString() },
+      query: { test: "true", mood: "sci-fi" },
+      user: { username: "testuser" },
+    } as unknown as Request;
+    const resStoryInvalid = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    } as unknown as Response;
+    await requestHandler.retrieveStory(reqStoryInvalid, resStoryInvalid);
+    const responseInvalidMood = (resStoryInvalid.send as jest.Mock).mock
+      .calls[0][0];
+    expect(resStoryInvalid.status).toHaveBeenCalledWith(400);
+    expect(responseInvalidMood).toContain(
+      "Invalid mood value provided. Valid options include:",
+    );
+
+    // Get a story using a valid mood
+    const reqStory = {
+      params: { id: insertedIdOne.toString() },
+      query: { test: "true", mood: StoryMood.SAD },
+      user: { username: "testuser" },
+    } as unknown as Request;
+    const resStory = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    } as unknown as Response;
+    await requestHandler.retrieveStory(reqStory, resStory);
+    expect(resStory.status).toHaveBeenCalledWith(400);
+    const story = (resStory.send as jest.Mock).mock.calls[0][0];
+    expect(typeof story).toBe("string");
 
     // Insert a second item so we can read all
     const bodyTwo: MasterListCreateRequest = {

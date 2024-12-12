@@ -35,6 +35,7 @@ async function main() {
     app.get("/:id", (req, res) => requestHandler.retrieveObject(req, res));
     app.patch("/:id", (req, res) => requestHandler.updateObject(req, res));
     app.delete("/:id", (req, res) => requestHandler.deleteObject(req, res));
+    app.get("/story/:id", (req, res) => requestHandler.retrieveStory(req, res));
 
     // Start the server
     app.listen(PORT, () => {

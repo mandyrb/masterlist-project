@@ -8,6 +8,7 @@ export interface MasterList {
   items: MasterListItem[];
   username: string;
   suggestions?: string;
+  pinned: boolean;
 }
 
 export interface MasterListItem {
@@ -36,4 +37,10 @@ declare module "express-serve-static-core" {
       username: string;
     };
   }
+}
+
+export enum StoryMood {
+  HAPPY = "happy",
+  SAD = "sad",
+  SCARY = "scary",
 }

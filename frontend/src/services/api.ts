@@ -1,4 +1,5 @@
 import { MasterListItem } from "../App";
+import { StoryMood } from "../services/types";
 
 const API_URL = "http://localhost:3000";
 
@@ -36,6 +37,14 @@ export const updateList = async (
     body: JSON.stringify(list),
   });
   return response.json();
+};
+
+export const getStoryForList = async (id: string, mood: StoryMood) => {
+  const response = await fetch(`${API_URL}/story/${id}?mood=${mood}`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+  return response.text();
 };
 
 export const deleteList = async (id: string) => {
