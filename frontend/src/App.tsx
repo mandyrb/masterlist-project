@@ -5,25 +5,12 @@ import CreateListForm from "./components/CreateListForm";
 import ListView from "./components/ListView";
 import Auth from "./components/Auth";
 import { fetchLists, createList, updateList, deleteList } from "./services/api";
-
-export interface UserList {
-  _id: string;
-  name: string;
-  createdDate: Date;
-  modifiedDate: Date;
-  items: MasterListItem[];
-  suggestions: string;
-  pinned: boolean;
-}
-
-export interface MasterListItem {
-  name: string;
-  favorite: boolean;
-}
+import { UserList } from "./services/types";
 
 const App: React.FC = () => {
   const [lists, setLists] = useState<UserList[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -38,8 +25,11 @@ const App: React.FC = () => {
         try {
           const data = await fetchLists();
           setLists(data);
-        } catch (error) {
-          console.error("Failed to fetch lists:", error);
+        } catch (error: any) {
+          if (error.message && error.message === "Invalid token") {
+            handleLogout();
+            setAuthError("Your session has expired; please login again");
+          } else console.error("Failed to fetch lists:", error);
         }
       };
       loadLists();
@@ -51,8 +41,11 @@ const App: React.FC = () => {
       await createList({ name, items: [] });
       const data = await fetchLists();
       setLists(data);
-    } catch (error) {
-      console.error("Failed to create list:", error);
+    } catch (error: any) {
+      if (error.message && error.message === "Invalid token") {
+        handleLogout();
+        setAuthError("Your session has expired; please login again");
+      } else console.error("Failed to create list:", error);
     }
   };
 
@@ -61,8 +54,11 @@ const App: React.FC = () => {
       await updateList(updatedList._id, updatedList);
       const data = await fetchLists();
       setLists(data);
-    } catch (error) {
-      console.error("Failed to update list:", error);
+    } catch (error: any) {
+      if (error.message && error.message === "Invalid token") {
+        handleLogout();
+        setAuthError("Your session has expired; please login again");
+      } else console.error("Failed to update list:", error);
     }
   };
 
@@ -71,8 +67,11 @@ const App: React.FC = () => {
       await deleteList(id);
       const data = await fetchLists();
       setLists(data);
-    } catch (error) {
-      console.error("Failed to delete list:", error);
+    } catch (error: any) {
+      if (error.message && error.message === "Invalid token") {
+        handleLogout();
+        setAuthError("Your session has expired; please login again");
+      } else console.error("Failed to delete lists:", error);
     }
   };
 
@@ -137,10 +136,15 @@ const App: React.FC = () => {
                       lists={lists}
                       onDelete={handleDeleteList}
                       onEdit={handleUpdateList}
+                      handleLogout={handleLogout}
+                      setAuthError={setAuthError}
                     />
                   </>
                 ) : (
-                  <Auth onAuthSuccess={() => setIsAuthenticated(true)} />
+                  <Auth
+                    onAuthSuccess={() => setIsAuthenticated(true)}
+                    errorMessage={authError}
+                  />
                 )
               }
             />

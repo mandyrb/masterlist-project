@@ -8,11 +8,12 @@ Follow these steps to set up and run the project locally:
 
 - Install Node.js from [nodejs.org](https://nodejs.org/)
 - Install Docker from [docker.com](https://www.docker.com/)
-- Install dependencies: `npm install`
 - Pull the MongoDB Docker image: `docker pull mongo`
-- Create an `.env` file at the project root with values for `AUTH_KEY` and `OPENAI_API_KEY`
 - Start the MongoDB container: `docker run --name mongodb -d -p 27017:27017 -v mongo-data:/data/db mongo`
-- Start the application: `npm run dev:all`
+- Install backend dependencies: `npm install`
+- Install frontend dependencies: `cd frontend && npm install`
+- Create an `.env` file at the project root with values for `AUTH_KEY` and `OPENAI_API_KEY`
+- Start the application from project root: `npm run dev:all`
 
 To run the tests:
 

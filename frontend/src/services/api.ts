@@ -1,5 +1,4 @@
-import { MasterListItem } from "../App";
-import { StoryMood } from "../services/types";
+import { MasterListItem, StoryMood } from "../services/types";
 
 const API_URL = "http://localhost:3000";
 
@@ -15,6 +14,7 @@ export const fetchLists = async () => {
   const response = await fetch(`${API_URL}/list/`, {
     headers: getAuthHeaders(),
   });
+  await handleApiResponse(response);
   return response.json();
 };
 
@@ -24,6 +24,7 @@ export const createList = async (list: { name: string; items: string[] }) => {
     headers: getAuthHeaders(),
     body: JSON.stringify(list),
   });
+  await handleApiResponse(response);
   return response.json();
 };
 
@@ -36,6 +37,7 @@ export const updateList = async (
     headers: getAuthHeaders(),
     body: JSON.stringify(list),
   });
+  await handleApiResponse(response);
   return response.json();
 };
 
@@ -44,14 +46,16 @@ export const getStoryForList = async (id: string, mood: StoryMood) => {
     method: "GET",
     headers: getAuthHeaders(),
   });
+  await handleApiResponse(response);
   return response.text();
 };
 
 export const deleteList = async (id: string) => {
-  await fetch(`${API_URL}/list/${id}`, {
+  const response = await fetch(`${API_URL}/list/${id}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
+  await handleApiResponse(response);
 };
 
 export const registerUser = async (user: {
@@ -84,4 +88,16 @@ export const loginUser = async (user: {
     throw { message: responseBody, status: response.status };
   }
   return JSON.parse(responseBody);
+};
+
+export const handleApiResponse = async (response: Response) => {
+  if (response.status === 403) {
+    const responseBody = await response.text();
+    if (responseBody.includes("Invalid token")) {
+      throw {
+        message: "Invalid token",
+        status: response.status,
+      };
+    }
+  }
 };

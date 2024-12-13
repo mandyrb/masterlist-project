@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   TextField,
   Button,
@@ -12,15 +12,21 @@ import { registerUser, loginUser } from "../services/api";
 
 interface AuthProps {
   onAuthSuccess: () => void;
+  errorMessage?: string | null;
 }
 
-const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
+const Auth: React.FC<AuthProps> = ({ onAuthSuccess, errorMessage }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"login" | "register">("login");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(errorMessage || null);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (errorMessage) {
+      setError(errorMessage);
+    }
+  }, [errorMessage]);
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);

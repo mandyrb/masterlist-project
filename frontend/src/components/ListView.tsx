@@ -18,21 +18,28 @@ import {
   FormLabel,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { MasterListItem, UserList } from "../App";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import PushPinIcon from "@mui/icons-material/PushPin";
 import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
 import { getStoryForList } from "../services/api";
-import { StoryMood } from "../services/types";
+import { MasterListItem, StoryMood, UserList } from "../services/types";
 
 interface ListViewProps {
   lists: UserList[];
   onDelete: (id: string) => void;
   onEdit: (updatedList: UserList) => void;
+  handleLogout: () => void;
+  setAuthError: (message: string) => void;
 }
 
-const ListView: React.FC<ListViewProps> = ({ lists, onDelete, onEdit }) => {
+const ListView: React.FC<ListViewProps> = ({
+  lists,
+  onDelete,
+  onEdit,
+  handleLogout,
+  setAuthError,
+}) => {
   const [newItem, setNewItem] = useState<{ [key: string]: string }>({
     name: "",
   });
@@ -95,14 +102,23 @@ const ListView: React.FC<ListViewProps> = ({ lists, onDelete, onEdit }) => {
       const mood = moods[listId] || StoryMood.HAPPY;
       const story = await getStoryForList(listId, mood);
       setStories((prevStories) => ({ ...prevStories, [listId]: story }));
-    } catch (error) {
-      console.error("Failed to fetch story:", error);
+    } catch (error: any) {
+      if (error.message && error.message === "Invalid token") {
+        handleLogout();
+        setAuthError("Your session has expired; please login again");
+      } else {
+        console.error("Failed to fetch story:", error);
+      }
     }
   };
 
-  const sortedLists = [...lists].sort(
-    (a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0),
-  );
+  const sortedLists = [...lists].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return (
+      new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
+    );
+  });
 
   return (
     <Grid container spacing={2}>
