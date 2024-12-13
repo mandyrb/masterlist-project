@@ -261,7 +261,7 @@ const ListView: React.FC<ListViewProps> = ({
           </Grid>
         ))
       ) : (
-        <Typography variant="body1">No lists available</Typography>
+        <Typography variant="body1"></Typography>
       )}
     </Grid>
   );

@@ -335,7 +335,6 @@ export class RequestHandler {
     object: MasterList,
     mood: StoryMood,
   ): Promise<string> {
-    console.log(`Your task is to generate a ${mood} story`);
     try {
       const messages: ChatCompletionMessageParam[] = [
         {

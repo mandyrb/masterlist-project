@@ -1,8 +1,9 @@
 import request from "supertest";
 import { API_URL } from "../../constants";
+import { StoryMood } from "../../types";
 const testUser = { username: "testuser", password: "testpassword" };
 
-describe("User API Endpoints", () => {
+describe("Auth API Endpoints", () => {
   beforeAll(async () => {
     // Ensure the test user exists
     await request(API_URL)
@@ -76,7 +77,7 @@ describe("List API Endpoints", () => {
   it("should handle CRUD operations", async () => {
     // Create a new object
     const postResponse = await request(API_URL)
-      .post("/")
+      .post("/list")
       .set("Authorization", `Bearer ${token}`)
       .query({ test: "true" })
       .send({
@@ -92,7 +93,7 @@ describe("List API Endpoints", () => {
 
     // Bad create request
     const badCreateResponse = await request(API_URL)
-      .post("/")
+      .post("/list")
       .set("Authorization", `Bearer ${token}`)
       .query({ test: "true" })
       .send({
@@ -108,7 +109,7 @@ describe("List API Endpoints", () => {
 
     // Retrieve all objects
     const getAllResponse = await request(API_URL)
-      .get("/")
+      .get("/list")
       .set("Authorization", `Bearer ${token}`)
       .query({ test: "true" });
     expect(getAllResponse.status).toBe(200);
@@ -116,7 +117,7 @@ describe("List API Endpoints", () => {
 
     // Retrieve the specific object
     const getResponse = await request(API_URL)
-      .get(`/${id}`)
+      .get(`/list/${id}`)
       .set("Authorization", `Bearer ${token}`)
       .query({ test: "true" });
     expect(getResponse.status).toBe(200);
@@ -125,7 +126,7 @@ describe("List API Endpoints", () => {
     // Bad read request - nonexistent id
     const nonExistentId = "000000000000000000000000";
     const badReadResponseOne = await request(API_URL)
-      .get(`/${nonExistentId}`)
+      .get(`/list/${nonExistentId}`)
       .set("Authorization", `Bearer ${token}`)
       .query({ test: "true" });
     expect(badReadResponseOne.status).toBe(404);
@@ -136,7 +137,7 @@ describe("List API Endpoints", () => {
     // Bad read request - incorrect id length
     const shortId = "0000000";
     const badReadResponseTwo = await request(API_URL)
-      .get(`/${shortId}`)
+      .get(`/list/${shortId}`)
       .set("Authorization", `Bearer ${token}`)
       .query({ test: "true" });
     expect(badReadResponseTwo.status).toBe(400);
@@ -146,7 +147,7 @@ describe("List API Endpoints", () => {
 
     // Update the object
     const patchResponse = await request(API_URL)
-      .patch(`/${id}`)
+      .patch(`/list/${id}`)
       .set("Authorization", `Bearer ${token}`)
       .send({
         ...getResponse.body,
@@ -159,10 +160,76 @@ describe("List API Endpoints", () => {
 
     // Delete the object
     const deleteResponse = await request(API_URL)
-      .delete(`/${id}`)
+      .delete(`/list/${id}`)
       .set("Authorization", `Bearer ${token}`)
       .query({ test: "true" });
     expect(deleteResponse.status).toBe(200);
     expect(deleteResponse.text).toBe(`Deleted object with id: ${id}`);
+  });
+});
+
+describe("Story API Endpoints", () => {
+  let token: string;
+
+  beforeAll(async () => {
+    // Ensure the test user exists
+    await request(API_URL)
+      .post("/users")
+      .query({ test: "true" })
+      .send(testUser);
+
+    // Login to get the token
+    const loginResponse = await request(API_URL)
+      .post("/login")
+      .query({ test: "true" })
+      .send({ username: "testuser", password: "testpassword" });
+
+    token = loginResponse.body.token;
+  });
+
+  it("should retrieve a story for a list", async () => {
+    // Create a new object
+    const postResponse = await request(API_URL)
+      .post("/list")
+      .set("Authorization", `Bearer ${token}`)
+      .query({ test: "true" })
+      .send({
+        name: "Test Story List",
+        items: [
+          { name: "item1", favorite: false },
+          { name: "item2", favorite: true },
+        ],
+      });
+    expect(postResponse.status).toBe(201);
+    const id = postResponse.body._id;
+
+    // Get a story from the list
+    const getResponse = await request(API_URL)
+      .get(`/story/${id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .query({ test: "true", mood: StoryMood.HAPPY });
+    expect(getResponse.status).toBe(200);
+    expect(typeof getResponse.text).toBe("string");
+
+    // List not found
+    const getResponseNotFound = await request(API_URL)
+      .get(`/story/000000000000000000000000`)
+      .set("Authorization", `Bearer ${token}`)
+      .query({ test: "true", mood: StoryMood.HAPPY });
+    expect(getResponseNotFound.status).toBe(404);
+
+    // Bad request, mood not provided
+    const getResponseNoMood = await request(API_URL)
+      .get(`/story/${id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .query({ test: "true" });
+    expect(getResponseNoMood.status).toBe(400);
+
+    // Bad request, invalid mood
+    const getResponseInvalidMood = await request(API_URL)
+      .get(`/story/${id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .query({ test: "true", mood: "sci-fi" });
+    expect(getResponseInvalidMood.status).toBe(400);
   });
 });

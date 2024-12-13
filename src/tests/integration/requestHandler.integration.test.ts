@@ -211,7 +211,7 @@ describe("RequestHandler Integration Tests", () => {
       send: jest.fn(),
     } as unknown as Response;
     await requestHandler.retrieveStory(reqStory, resStory);
-    expect(resStory.status).toHaveBeenCalledWith(400);
+    expect(resStory.status).toHaveBeenCalledWith(200);
     const story = (resStory.send as jest.Mock).mock.calls[0][0];
     expect(typeof story).toBe("string");
 
