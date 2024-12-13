@@ -69,7 +69,7 @@ export const registerUser = async (user: {
   });
   const responseBody = await response.text();
   if (!response.ok) {
-    throw { message: responseBody, status: response.status };
+    throw new Error(responseBody);
   }
   return JSON.parse(responseBody);
 };
@@ -85,7 +85,7 @@ export const loginUser = async (user: {
   });
   const responseBody = await response.text();
   if (!response.ok) {
-    throw { message: responseBody, status: response.status };
+    throw new Error(responseBody);
   }
   return JSON.parse(responseBody);
 };
@@ -94,10 +94,7 @@ export const handleApiResponse = async (response: Response) => {
   if (response.status === 403) {
     const responseBody = await response.text();
     if (responseBody.includes("Invalid token")) {
-      throw {
-        message: "Invalid token",
-        status: response.status,
-      };
+      throw new Error(responseBody);
     }
   }
 };

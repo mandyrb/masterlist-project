@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { Container, Typography, Button, Box } from "@mui/material";
 import CreateListForm from "./components/CreateListForm";
@@ -19,6 +19,17 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setIsAuthenticated(false);
+    setLists([]);
+  };
+
+  const handleExpiredToken = useCallback(() => {
+    handleLogout();
+    setAuthError("Your session has expired; please login again");
+  }, [handleLogout]);
+
   useEffect(() => {
     if (isAuthenticated) {
       const loadLists = async () => {
@@ -27,14 +38,13 @@ const App: React.FC = () => {
           setLists(data);
         } catch (error: any) {
           if (error.message && error.message === "Invalid token") {
-            handleLogout();
-            setAuthError("Your session has expired; please login again");
+            handleExpiredToken();
           } else console.error("Failed to fetch lists:", error);
         }
       };
       loadLists();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, handleExpiredToken]);
 
   const handleCreateList = async (name: string) => {
     try {
@@ -43,8 +53,7 @@ const App: React.FC = () => {
       setLists(data);
     } catch (error: any) {
       if (error.message && error.message === "Invalid token") {
-        handleLogout();
-        setAuthError("Your session has expired; please login again");
+        handleExpiredToken();
       } else console.error("Failed to create list:", error);
     }
   };
@@ -56,8 +65,7 @@ const App: React.FC = () => {
       setLists(data);
     } catch (error: any) {
       if (error.message && error.message === "Invalid token") {
-        handleLogout();
-        setAuthError("Your session has expired; please login again");
+        handleExpiredToken();
       } else console.error("Failed to update list:", error);
     }
   };
@@ -69,16 +77,9 @@ const App: React.FC = () => {
       setLists(data);
     } catch (error: any) {
       if (error.message && error.message === "Invalid token") {
-        handleLogout();
-        setAuthError("Your session has expired; please login again");
+        handleExpiredToken();
       } else console.error("Failed to delete lists:", error);
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    setIsAuthenticated(false);
-    setLists([]);
   };
 
   return (
