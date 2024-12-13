@@ -1,6 +1,6 @@
 # Master List Project with Express and MongoDB
 
-This project is a simple API built with TypeScript, Express, and MongoDB. It allows users to create, read, update, and delete lists in a MongoDB database. It also provides AI-generated suggestions for new list items.
+This project is a simple API built with TypeScript, Express, and MongoDB. It allows users to create, read, update, and delete lists in a MongoDB database. It also provides AI-generated suggestions for new list items, and gives the user the option to generate stories from their list items.
 
 ## Getting Started
 
